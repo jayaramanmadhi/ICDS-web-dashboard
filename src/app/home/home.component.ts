@@ -1,19 +1,20 @@
-import { Component, OnInit,ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
+import { MatTableDataSource } from '@angular/material/table';
 import { ChartOptions, ChartType, ChartData } from 'chart.js';
-
+import * as XLSX from 'xlsx';
+import * as FileSaver from 'file-saver';
+import { MatSort } from '@angular/material/sort';
+import { CoursesService } from '../shared/services/courses/courses.service'
+import { switchMap } from 'rxjs/operators';
 interface DashboardData {
   awcsObserved: number;
   awcsNotObserved: number;
-  observationTrends: Array<{month: string, value: number}>;
-  notVisitedTrends: Array<{month: string, value: number}>;
-  observationsByBlock: Array<{block: string, count: number}>;
-  observationsByCadre: Array<{cadre: string, count: number}>;
+  observationTrends: Array<{ month: string, value: number }>;
+  notVisitedTrends: Array<{ month: string, value: number }>;
+  observationsByBlock: Array<{ block: string, count: number }>;
+  observationsByCadre: Array<{ cadre: string, count: number }>;
 }
-
-
-
 
 @Component({
   selector: 'app-home',
@@ -22,74 +23,100 @@ interface DashboardData {
 })
 export class HomeComponent implements OnInit {
 
-// Line chart
+  showChart = true;
+  isLoading = false;
 
-public observationTrendData: ChartData<'line'> = {
-  labels: ['Apr', 'May', 'Jun'],
-  datasets: [
-    {
-      data: [150, 180, 320],
-      label: 'Observed',
-      fill: false,
-      tension: 0.4,
-      borderColor: '#1976d2',
-      pointBackgroundColor: '#1976d2',
-      backgroundColor: '#1976d2'
-    }
-  ]
-};
 
-// Not Visited Trend Line Chart
-public notVisitedTrendData: ChartData<'line'> = {
-  labels: ['Apr', 'May', 'Jun'],
-  datasets: [
-    {
-      data: [220, 180, 120],
-      label: 'Not Visited',
-      fill: false,
-      tension: 0.4,
-      borderColor: '#f57c00',
-      pointBackgroundColor: '#f57c00',
-      backgroundColor: '#f57c00'
-    }
-  ]
-};
+  districtData: any[] = [];
+  
 
-// Line Chart Options
-public lineChartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    y: { beginAtZero: true }
+  @ViewChild('chartCanvas') chartCanvas;
+
+  @ViewChild(MatSort) sort: MatSort;
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  toggleView() {
+    this.showChart = !this.showChart;
   }
-};
 
-// Observations by Cadre Horizontal Bar Chart
-public cadreChartData: ChartData<'bar'> = {
-  labels: ['Supervisor', 'Sector Officer', 'CDPO'],
-  datasets: [
-    {
-      label: 'Observations',
-      data: [120, 80, 60],
-      backgroundColor: ['#42a5f5', '#66bb6a', '#ffa726'],
-      borderRadius: 6,
-      barPercentage: 0.6
-    }
-  ]
-};
 
-public horizontalBarOptions: ChartOptions<'bar'> = {
-  indexAxis: 'y',
-  responsive: true,
-  plugins: {
-    legend: { display: false }
-  },
-  scales: {
-    x: { beginAtZero: true }
+  dashboardStatusData = {
+    completed: 194,
+    inProgress: 45,
+    notCompleted: 21
+  };
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
   }
-};
+  // Line chart
+
+  public observationTrendData: ChartData<'line'> = {
+    labels: ['Apr', 'May', 'Jun'],
+    datasets: [
+      {
+        data: [150, 180, 320],
+        label: 'Observed',
+        fill: false,
+        tension: 0.4,
+        borderColor: '#1976d2',
+        pointBackgroundColor: '#1976d2',
+        backgroundColor: '#1976d2'
+      }
+    ]
+  };
+
+  // Not Visited Trend Line Chart
+  public notVisitedTrendData: ChartData<'line'> = {
+    labels: ['Apr', 'May', 'Jun'],
+    datasets: [
+      {
+        data: [220, 180, 120],
+        label: 'Not Visited',
+        fill: false,
+        tension: 0.4,
+        borderColor: '#f57c00',
+        pointBackgroundColor: '#f57c00',
+        backgroundColor: '#f57c00'
+      }
+    ]
+  };
+
+  // Line Chart Options
+  public lineChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  };
+
+  // Observations by Cadre Horizontal Bar Chart
+  public cadreChartData: ChartData<'bar'> = {
+    labels: ['Supervisor', 'Sector Officer', 'CDPO'],
+    datasets: [
+      {
+        label: 'Observations',
+        data: [120, 80, 60],
+        backgroundColor: ['#42a5f5', '#66bb6a', '#ffa726'],
+        borderRadius: 6,
+        barPercentage: 0.6
+      }
+    ]
+  };
+
+  public horizontalBarOptions: ChartOptions<'bar'> = {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: { beginAtZero: true }
+    }
+  };
 
 
 
@@ -101,7 +128,7 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `${context.dataset.label || ''}: ${context.parsed.y} AWCs`;
           }
         }
@@ -162,10 +189,10 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
     datasets: [
       {
         label: 'AWC Count',
-        data: [1200, 1300, 2500, 2600, 2700, 2300, 700,1200, 1300, 2500,
-               2600, 2700, 2300, 1100, 2300, 1100,1200, 1300, 2500,1300,
-               2700, 2300, 1100,1200, 1300, 2500, 2600, 2700, 2300, 1100,
-               1200, 1300, 2500,1300, 2500,2600, 200, 2300],
+        data: [1200, 1300, 2500, 2600, 2700, 2300, 700, 1200, 1300, 2500,
+          2600, 2700, 2300, 1100, 2300, 1100, 1200, 1300, 2500, 1300,
+          2700, 2300, 1100, 1200, 1300, 2500, 2600, 2700, 2300, 1100,
+          1200, 1300, 2500, 1300, 2500, 2600, 200, 2300],
         backgroundColor: [
           '#5d87ff', '#5d87ff', '#5d87ff',
           '#5d87ff', '#5d87ff', '#5d87ff', '#FF6384' // example: last bar highlighted
@@ -174,17 +201,26 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
         barPercentage: 0.8
       }
     ]
+
+
   };
 
+  displayedColumns = ['slNo', 'district', 'available', 'observed'];
+  dataSource = new MatTableDataSource([
+    { district: 'Chennai', available: 1200, observed: 1100 },
+    { district: 'Madurai', available: 1000, observed: 850 },
+    { district: 'Coimbatore', available: 950, observed: 920 },
+    { district: 'Salem', available: 800, observed: 700 },
+    { district: 'Erode', available: 650, observed: 620 },
+    { district: 'Trichy', available: 1200, observed: 1150 },
+    { district: 'Thanjavur', available: 900, observed: 870 }
+  ]);
 
-
-
-  
-  selectedYear = '2024';
-  selectedMonth = 'June';
+  selectedYear = '2025';
+  selectedMonth = 'July';
   selectedBlock = 'All Blocks';
   selectedSector = 'All Sectors';
-  
+
   dashboardData: DashboardData = {
     awcsObserved: 1200,
     awcsNotObserved: 800,
@@ -216,12 +252,7 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
 
   sideMenuOpen = true;
   activeMenuItem = 'overview';
-
-
   selectedDistrict: string = '';
-
-
-
 
   districtList = [
     { key: 'ARIYALUR', value: 'Ariyalur' },
@@ -263,29 +294,87 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
     { key: 'VIRUDHUNAGAR', value: 'Virudhunagar' },
     { key: 'MAYILADUTHURAI', value: 'Mayiladuthurai' }
   ];
-  constructor(private http: HttpClient) {
 
-   
-
-   
-  
+  downloadExcel() {
+    const worksheet = XLSX.utils.json_to_sheet(this.dataSource.data);
+    const workbook = { Sheets: { 'AWC Data': worksheet }, SheetNames: ['AWC Data'] };
+    const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    FileSaver.saveAs(new Blob([excelBuffer]), 'awc-observation.xlsx');
   }
 
+  downloadChart() {
+    const chartEl = document.getElementById('chartCanvas') as HTMLCanvasElement;
+    if (chartEl) {
+      const url = chartEl.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'awc-observation-chart.png';
+      link.click();
+    }
+  }
+
+
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.dataSource.filter = filterValue;
+  }
+
+  toggleSort() {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    this.sort.active = 'observed';
+    this.sort.direction = this.sortDirection;
+    this.sort.sortChange.emit({ active: 'observed', direction: this.sortDirection });
+  }
+
+  constructor(private service: CoursesService) {}
+
   ngOnInit(): void {
-    this.loadDashboardData();
+    console.log('test');
+    console.log('test');
+
+    this.service.loginWithEmail().pipe(
+      switchMap((loginRes) => {
+        console.log('Login Success:', loginRes);
+        return this.service.fetchUser(); // call fetchUser only after login
+      })
+    ).subscribe({
+      next: (userRes) => {
+        console.log('User Fetched:', userRes);
+        this.loadDashboardData();
+        this.loadDistrictData()
+      },
+      error: (err) => {
+        console.error('Error:', err);
+      },
+    });
+    
   }
 
   loadDashboardData(): void {
-    // Replace with your actual API endpoint
-    // this.http.get<DashboardData>('/api/dashboard-data').subscribe(
-    //   data => {
-    //     this.dashboardData = data;
-    //   },
-    //   error => {
-    //     console.error('Error loading dashboard data:', error);
-    //   }
-    // );
+   // Load state Api 
+   this.isLoading = true;
+   this.service.getStatewiseData().subscribe({
+    next: (res) => {
+      this.isLoading = false;
+      console.log(res,'dashboard data ');
+      
+     },
+    error: (err) => console.error('Statewise API Error:', err),
+  });
   }
+
+  loadDistrictData(): void {
+    // Load state Api 
+    this.isLoading = true;
+    this.service.postDistrictData().subscribe({
+     next: (res) => {
+      this.isLoading = false;
+      console.log(res,'district Data ');
+      
+     },
+     error: (err) => console.error('Statewise API Error:', err),
+   });
+   }
 
   toggleSideMenu(): void {
     this.sideMenuOpen = !this.sideMenuOpen;
@@ -293,7 +382,7 @@ public horizontalBarOptions: ChartOptions<'bar'> = {
 
   setActiveMenuItem(item: string): void {
     this.activeMenuItem = item;
-    
+
   }
 
   onFilterChange(): void {

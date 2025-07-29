@@ -3,10 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { AdminPayrollComponent } from './examples/child-routes/admin-payroll/admin-payroll.component';
 import { AdminVacationComponent } from './examples/child-routes/admin-vacation/admin-vacation.component';
 import { AdminComponent } from './examples/child-routes/admin.component';
-import { CoursesComponent } from './courses/courses.component';
+import { SectorComponent } from './courses/sector.component';
 import { DynamicComponent } from './examples/dynamic-component/dynamic-component.component';
 import { CustomInputComponent } from './examples/custom-input/custom-input.component';
-import { ExamplesComponent } from './examples/examples.component';
+import { DistrictComponent } from './examples/district.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RouteParamsComponent } from './examples/route-params/route-params.component';
@@ -15,11 +15,11 @@ import { ProtectedComponent } from './examples/protected/protected.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
-  { path: 'courses', component: CoursesComponent },
+  { path: 'courses', component: SectorComponent },
   { path: 'login', component: LoginComponent },
   {
     path: 'examples',
-    component: ExamplesComponent,
+    component: DistrictComponent,
     children: [
       { path: 'create', component: DynamicComponent },
       { path: 'input', component: CustomInputComponent },

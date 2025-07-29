@@ -11,9 +11,9 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CourseDetailsComponent } from './courses/course-details/course-details.component';
 import { CoursesListComponent } from './courses/courses-list/courses-list.component';
-import { CoursesComponent } from './courses/courses.component';
+import { SectorComponent } from './courses/sector.component';
 import { DynamicComponent } from './examples/dynamic-component/dynamic-component.component';
-import { ExamplesComponent } from './examples/examples.component';
+import { DistrictComponent } from './examples/district.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { MaterialModule } from './material.module';
@@ -42,6 +42,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NgChartsModule } from 'ng2-charts';
+import { SideMenuComponent } from './side-menu/side-menu.component'
 
 @NgModule({
   imports: [
@@ -71,14 +72,14 @@ import { NgChartsModule } from 'ng2-charts';
   declarations: [
     AppComponent,
     HomeComponent,
-    CoursesComponent,
+    SectorComponent,
     CourseDetailsComponent,
     CoursesListComponent,
     LoginComponent,
     AdminComponent,
     AdminPayrollComponent,
     AdminVacationComponent,
-    ExamplesComponent,
+    DistrictComponent,
     DynamicComponent,
     CircleComponent,
     SquareComponent,
@@ -87,6 +88,7 @@ import { NgChartsModule } from 'ng2-charts';
     CustomControlComponent,
     RouteParamsComponent,
     ProtectedComponent,
+    SideMenuComponent
     
   ],
   providers: [AuthService, NotificationService,CoursesService],
